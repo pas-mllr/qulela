@@ -1,0 +1,105 @@
+{
+  "name": "qulela",
+  "displayName": "qulela",
+  "description": "Interactive coding tutor integrated with GitHub Copilot Chat",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qulearnlabs/qulela"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.97.0"
+  },
+  "categories": [
+    "Other",
+    "Education"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "qulela.tutor",
+        "fullName": "QuLeLa",
+        "name": "qulela",
+        "description": "What can I teach you?",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "exercise",
+            "description": "Provide exercises to practice a concept."
+          }
+        ]
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "qulelaWalkthrough",
+        "title": "Get Started with QuLeLa",
+        "description": "Set up your personalized learning experience",
+        "steps": [
+          {
+            "id": "welcome",
+            "title": "Welcome to QuLeLa",
+            "description": "Let's personalize your learning experience",
+            "media": {
+              "markdown": "media/welcome.md"
+            }
+          },
+          {
+            "id": "usage",
+            "title": "How to Use QuLeLa",
+            "description": "Learn how to interact with your personal tutor",
+            "media": {
+              "markdown": "media/usage.md"
+            }
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "qulela.setName",
+        "title": "QuLeLa: Set Your Name"
+      },
+      {
+        "command": "qulela.setExperienceLevel",
+        "title": "QuLeLa: Set Your Experience Level"
+      },
+      {
+        "command": "qulela.startLearning",
+        "title": "QuLeLa: Start Learning"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.97.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "eslint": "^9.19.0",
+    "esbuild": "^0.24.2",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.7.3",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
+  }
+}
