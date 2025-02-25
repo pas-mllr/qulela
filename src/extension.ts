@@ -1,12 +1,20 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const BASE_PROMPT =
   'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 
 const EXERCISES_PROMPT =
   'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
+
+const LESSON_PROMPT =
+  'Here is the lesson content. Study it carefully and ask me any questions you have. I am here to help you understand the material fully.';
+
+const HINTS_PROMPT =
+  'Here are some helpful hints for the lesson. These hints will help guide you through the material without giving away the answers.';
 
 // Storage keys
 const USER_NAME_KEY = 'qulela.userName';
@@ -30,6 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Initialize the prompt with personalization
     let prompt = BASE_PROMPT;
+    let lessonContent = '';
 
     // Modify prompt based on experience level and name
     if (userName) {
@@ -62,6 +71,104 @@ export function activate(context: vscode.ExtensionContext) {
         prompt += ' Create moderately challenging exercises.';
       } else if (experienceLevel === 'advanced') {
         prompt += ' Create challenging exercises that test deeper understanding.';
+      }
+    } else if (request.command === 'listLessons') {
+      try {
+        const lessonsDir = path.join(context.extensionUri.fsPath, 'lessons');
+        const files = fs.readdirSync(lessonsDir);
+        
+        // Filter to just lesson files
+        const lessonFiles = files.filter(file => file.startsWith('lesson-') && file.endsWith('.md'));
+        
+        if (lessonFiles.length > 0) {
+          const lessonList = lessonFiles
+            .map(file => {
+              const match = file.match(/lesson-(\d+)\.md/);
+              if (match) {
+                return `Lesson ${match[1]}`;
+              }
+              return null;
+            })
+            .filter(Boolean)
+            .join('\n- ');
+          
+          const message = `# Available Lessons\n\nHere are the lessons currently available:\n\n- ${lessonList}\n\nTo view a lesson, use \`/lesson <number>\`. For hints, use \`/hints <number>\`.`;
+          stream.markdown(message);
+        } else {
+          stream.markdown("No lessons are currently available.");
+        }
+        return;
+      } catch (error) {
+        console.error(`Error listing lessons: ${error}`);
+        stream.markdown("Sorry, there was an error listing the available lessons.");
+        return;
+      }
+    } else if (request.command === 'lesson' || request.command === 'hints') {
+      // Extract lesson number from the user's prompt
+      const lessonMatch = request.prompt.match(/\b(\d+)\b/);
+      const lessonNumber = lessonMatch ? lessonMatch[1] : '1'; // Default to lesson 1 if no number specified
+      
+      try {
+        // Get the lesson or hints content
+        const fileBaseName = request.command === 'lesson' ? 'lesson' : 'hints';
+        const filePath = path.join(context.extensionUri.fsPath, 'lessons', `${fileBaseName}-${lessonNumber}.md`);
+        
+        if (fs.existsSync(filePath)) {
+          lessonContent = fs.readFileSync(filePath, 'utf8');
+          
+          // Set the appropriate prompt
+          prompt = request.command === 'lesson' ? LESSON_PROMPT : HINTS_PROMPT;
+          
+          // Add personalization
+          if (userName) {
+            prompt += ` ${userName}, here's the content you requested:`;
+          } else {
+            prompt += ' Here\'s the content you requested:';
+          }
+          
+          // Send a combined message instead of modifying request.prompt
+          const combinedPrompt = `${prompt}\n\n${lessonContent}`;
+          
+          // Initialize messages with the combined prompt
+          const messages = [vscode.LanguageModelChatMessage.User(combinedPrompt)];
+          
+          // Add previous messages
+          const previousMessages = chatContext.history.filter(
+            h => h instanceof vscode.ChatResponseTurn
+          );
+          
+          previousMessages.forEach(m => {
+            let fullMessage = '';
+            m.response.forEach(r => {
+              const mdPart = r as vscode.ChatResponseMarkdownPart;
+              fullMessage += mdPart.value.value;
+            });
+            messages.push(vscode.LanguageModelChatMessage.Assistant(fullMessage));
+          });
+          
+          // Add the user's original question at the end
+          messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
+          
+          // Send the request
+          const chatResponse = await request.model.sendRequest(messages, {}, token);
+          
+          // Stream the response
+          for await (const fragment of chatResponse.text) {
+            stream.markdown(fragment);
+          }
+          
+          return;
+        } else {
+          // File not found
+          const errorMessage = `Sorry, ${request.command} ${lessonNumber} is not available. Please try a different lesson number.`;
+          stream.markdown(errorMessage);
+          return;
+        }
+      } catch (error) {
+        console.error(`Error reading lesson file: ${error}`);
+        const errorMessage = `Sorry, there was an error accessing the ${request.command} content. Please try again later.`;
+        stream.markdown(errorMessage);
+        return;
       }
     }
 
