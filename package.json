@@ -16,7 +16,11 @@
     "Education"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onWebviewPanel:qulelaWalkthrough",
+    "onCommand:qulela.openWalkthrough",
+    "onCommand:qulela.setName",
+    "onCommand:qulela.setExperienceLevel"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -84,6 +88,10 @@
       {
         "command": "qulela.startLearning",
         "title": "QuLeLa: Start Learning"
+      },
+      {
+        "command": "qulela.openWalkthrough",
+        "title": "QuLeLa: Open Getting Started Walkthrough"
       }
     ]
   },

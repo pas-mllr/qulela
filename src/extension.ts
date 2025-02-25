@@ -245,10 +245,17 @@ export function activate(context: vscode.ExtensionContext) {
       await vscode.commands.executeCommand('workbench.action.chat.insertParticipant', 'qulela');
     })
   );
+  
+  // Register command to open the walkthrough directly
+  context.subscriptions.push(
+    vscode.commands.registerCommand('qulela.openWalkthrough', async () => {
+      await vscode.commands.executeCommand('workbench.action.openWalkthrough', 'qulela.qulela#qulelaWalkthrough');
+    })
+  );
 
-  // Check if this is first run to show welcome notification
-  const hasShownWelcome = context.globalState.get('qulela.hasShownWelcome');
-  if (!hasShownWelcome) {
+  // Always show the welcome notification on startup
+  // We'll use a timeout to ensure it appears after VS Code is fully loaded
+  setTimeout(() => {
     const welcomeAction = 'Open Walkthrough';
     vscode.window.showInformationMessage(
       'Welcome to QuLeLa! Would you like to set up your personalized learning experience?',
@@ -258,8 +265,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.executeCommand('workbench.action.openWalkthrough', 'qulela.qulela#qulelaWalkthrough');
       }
     });
-    context.globalState.update('qulela.hasShownWelcome', true);
-  }
+  }, 2000); // 2-second delay
 }
 
 // This method is called when your extension is deactivated
