@@ -116,6 +116,23 @@ export function activate(context: vscode.ExtensionContext) {
         if (fs.existsSync(filePath)) {
           lessonContent = fs.readFileSync(filePath, 'utf8');
           
+          // If this is a lesson command, also open the file in the editor
+          if (request.command === 'lesson') {
+            // Create a URI for the file
+            const fileUri = vscode.Uri.file(filePath);
+            
+            // Open the file in the editor
+            vscode.window.showTextDocument(fileUri, {
+              viewColumn: vscode.ViewColumn.One, // Open in the first editor column
+              preview: false // Don't show it as a preview (temporary) tab
+            }).then(() => {
+              // Show a notification that the lesson is also open in the editor
+              vscode.window.showInformationMessage(
+                `Lesson ${lessonNumber} is now open in the editor for reference.`
+              );
+            });
+          }
+          
           // Set the appropriate prompt
           prompt = request.command === 'lesson' ? LESSON_PROMPT : HINTS_PROMPT;
           
@@ -124,6 +141,11 @@ export function activate(context: vscode.ExtensionContext) {
             prompt += ` ${userName}, here's the content you requested:`;
           } else {
             prompt += ' Here\'s the content you requested:';
+          }
+          
+          // Prepare a message for the chat that instructs the user about the open file
+          if (request.command === 'lesson') {
+            prompt += "\n\nI've also opened the lesson file in your editor for easy reference. You can switch between the chat and the editor to follow along.";
           }
           
           // Send a combined message instead of modifying request.prompt
