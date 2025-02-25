@@ -11,7 +11,7 @@ All notable changes to the "QuLeLa" extension will be documented in this file.
 - `/listLessons` command to see available lessons
 - Added Quantum Computing lesson content (Lesson 1)
 - Direct command to open the walkthrough via Command Palette
-- Enhanced `/lesson` command to open the lesson file in the editor
+- Enhanced `/lesson` command to open the lesson file in Markdown preview mode for better readability
 
 ### Changed
 - Improved extension packaging to reduce size

@@ -116,19 +116,16 @@ export function activate(context: vscode.ExtensionContext) {
         if (fs.existsSync(filePath)) {
           lessonContent = fs.readFileSync(filePath, 'utf8');
           
-          // If this is a lesson command, also open the file in the editor
+          // If this is a lesson command, also open the file in Markdown preview mode
           if (request.command === 'lesson') {
             // Create a URI for the file
             const fileUri = vscode.Uri.file(filePath);
             
-            // Open the file in the editor
-            vscode.window.showTextDocument(fileUri, {
-              viewColumn: vscode.ViewColumn.One, // Open in the first editor column
-              preview: false // Don't show it as a preview (temporary) tab
-            }).then(() => {
-              // Show a notification that the lesson is also open in the editor
+            // Open the file in Markdown preview
+            vscode.commands.executeCommand('markdown.showPreview', fileUri).then(() => {
+              // Show a notification that the lesson is also open in preview
               vscode.window.showInformationMessage(
-                `Lesson ${lessonNumber} is now open in the editor for reference.`
+                `Lesson ${lessonNumber} is now open in Markdown preview for better readability.`
               );
             });
           }
@@ -145,7 +142,7 @@ export function activate(context: vscode.ExtensionContext) {
           
           // Prepare a message for the chat that instructs the user about the open file
           if (request.command === 'lesson') {
-            prompt += "\n\nI've also opened the lesson file in your editor for easy reference. You can switch between the chat and the editor to follow along.";
+            prompt += "\n\nI've also opened the lesson in Markdown preview for a better reading experience. The formatted preview makes it easier to read code examples, tables, and other formatted content.";
           }
           
           // Send a combined message instead of modifying request.prompt
