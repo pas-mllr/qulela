@@ -12,3 +12,9 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+**/*.tar.gz
+qulela_backup*
+CLAUDE.md
+ROADMAP.md
+feature-tutorial.txt
+feature2-tutorial.txt
